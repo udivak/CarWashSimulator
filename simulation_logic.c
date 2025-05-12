@@ -17,7 +17,7 @@ extern volatile sig_atomic_t simulation_should_end;
 
 void main_process_logic(int num_stations, float avg_arrive_time_lambda, float avg_wash_time,
                        int run_time_seconds) {
-    print_log(0, 0, "Car Wash Simulator: Main process logic starting\n");
+    print_log(0, 0, "Main process logic starting.");
     printf("Will generate cars for up to %d seconds.\n", run_time_seconds);
     fflush(stdout);
 
@@ -30,19 +30,22 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
         return;
     }
     int children_forked_count = 0;
-    int car_generation_ended = 0; // Flag to indicate car generation has ended
-    double simulation_end_time = 0.0;
 
-    while (get_current_simulation_time_sec(shm_ptr->main_simulation_start_time_sec,
-                                            shm_ptr->main_simulation_start_time_nsec) < run_time_seconds && !simulation_should_end) {
-        float time_to_next_arrival = nextTime(avg_arrive_time_lambda);
+    while (!simulation_should_end) {
         double current_sim_time = get_current_simulation_time_sec(
-                shm_ptr->main_simulation_start_time_sec, shm_ptr->main_simulation_start_time_nsec);
+            shm_ptr->main_simulation_start_time_sec, shm_ptr->main_simulation_start_time_nsec);
 
-        if (current_sim_time + time_to_next_arrival >= run_time_seconds) {
-            car_generation_ended = 1;
-            simulation_end_time = run_time_seconds;
-            break; // Stop generating cars if next arrival exceeds run time
+        if (current_sim_time >= run_time_seconds) {
+            print_log(0, 0, "Car generation loop finished. Reason: Run time expired.");
+            break;
+        }
+
+        float time_to_next_arrival = nextTime(avg_arrive_time_lambda);
+        double arrival_time = current_sim_time + time_to_next_arrival;
+
+        if (arrival_time >= run_time_seconds) {
+            print_log(0, 0, "Car generation loop finishing (next arrival would exceed run time).");
+            break;
         }
 
         struct timespec sleep_duration = {(time_t)time_to_next_arrival,
@@ -65,7 +68,7 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
             if (shm_ptr && shm_id != -1)
                 shm_ptr->simulation_active = 0;
             break;
-        } else if (pid == 0) {                      // Child -> Car process
+        } else if (pid == 0) {
             srand(time(NULL) ^ getpid());
             car_process_logic(avg_wash_time);
             cleanup_ipc(0);
@@ -77,11 +80,6 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
                 fprintf(stderr, "Warning: Reached max forked children tracking array size.\n");
         }
     }
-
-    char reason_buf[100];
-    snprintf(reason_buf, sizeof(reason_buf), "Car generation loop finished. Reason: %s.",
-             simulation_should_end ? "SIGINT received" : "Run time expired");
-    print_log(0, 0, reason_buf);
 
     if (shm_ptr && shm_id != -1)
         shm_ptr->simulation_active = 0;
@@ -131,13 +129,13 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
             break;
         }
 
-        if (M_loop_counter % 10 == 0 || M_loop_counter < 5) {
+        if (M_loop_counter % 10 == 0 || M_loop_counter < 5) {       // Main waiting for child cars to finish - Stats
             char wait_status_buf[200];
             snprintf(wait_status_buf, sizeof(wait_status_buf),
                      "Main wait: Forked=%d, Reaped=%d. Queue=%ld. EmptyStationsSem=%d (Target %d).",
                      children_forked_count, M_terminated_children_count, current_cars_in_queue,
                      current_empty_stations_val, num_stations);
-            print_log(0, 0, wait_status_buf);
+            //print_log(0, 0, wait_status_buf);
         }
 
         if (shm_ptr->sigint_triggered) {
@@ -148,14 +146,9 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
                 goto end_wait_loop;
             }
         } else {
-            if (car_generation_ended && current_cars_in_queue == 0 &&
-                current_empty_stations_val == num_stations &&
+            if (current_cars_in_queue == 0 && current_empty_stations_val == num_stations &&
                 M_terminated_children_count >= children_forked_count) {
-                char reason_buffer[200];
-                snprintf(reason_buffer, sizeof(reason_buffer),
-                         "Main: Run time expired (%.2f) - Queue empty, all stations free, and all forked children processed.",
-                         simulation_end_time);
-                print_log(0, 0, reason_buffer);
+                print_log(0, 0, "Main: Run time expired - Queue empty, all stations free, and all forked children processed.");
                 goto end_wait_loop;
             }
         }
