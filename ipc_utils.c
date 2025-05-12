@@ -1,10 +1,10 @@
-// ipc_utils.c
 #include "ipc_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/sem.h>
+#include <sys/shm.h>
 
 int shm_id = -1;
 shared_data_t *shm_ptr = (void *)-1;

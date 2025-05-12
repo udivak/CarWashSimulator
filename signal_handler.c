@@ -1,8 +1,8 @@
-// signal_handler.c
 #include "signal_handler.h"
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+
 
 volatile sig_atomic_t simulation_should_end = 0; // Definition
 
@@ -25,4 +25,5 @@ void sigint_handler(int signum) {
         shm_ptr->simulation_active = 0;
         shm_ptr->sigint_triggered = 1;
     }
+    (void) signum;      // Prevent unused variable warning
 }

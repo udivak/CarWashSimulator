@@ -1,10 +1,7 @@
-// signal_handler.h
 #ifndef SIGNAL_HANDLER_H
 #define SIGNAL_HANDLER_H
 
 #include <signal.h>
-#include <sys/types.h>
-#include <time.h>
 #include "structures.h"
 
 extern volatile sig_atomic_t simulation_should_end;
@@ -15,4 +12,4 @@ extern int shm_id;
 
 void sigint_handler(int signum);
 
-#endif // SIGNAL_HANDLER_H
+#endif

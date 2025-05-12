@@ -1,4 +1,3 @@
-// logging.c
 #include "logging.h"
 #include <stdio.h>
 #include <time.h>
@@ -32,8 +31,8 @@ void print_log(pid_t car_id, unsigned long arrival_num, const char *message_form
 
     if (car_id == 0) { // Main process logging (doesn't have an arrival number for itself)
         printf("%s, Time: %.6f\n", message_format, sim_time);
-    } else {
-        printf("Car: %d (AN: %lu), %s, Time: %.6f\n", car_id, arrival_num, message_format, sim_time);
+    } else {    // Car process logging
+        printf("Car: %d (Arrival Number: %lu), %s, Time: %.6f\n", car_id, arrival_num, message_format, sim_time);
     }
     fflush(stdout);
 }

@@ -1,4 +1,3 @@
-// utils.c
 #include "utils.h"
 #include <math.h>
 #include <stdlib.h>

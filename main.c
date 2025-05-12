@@ -3,19 +3,12 @@
 #include <unistd.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include <sys/sem.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
-#include <math.h>
-#include <string.h>
-#include <errno.h>
-#include <pthread.h> // Include for threads
-
 #include "constants.h"
 #include "structures.h"
-#include "utils.h"
 #include "logging.h"
 #include "ipc_utils.h"
 #include "signal_handler.h"
@@ -30,23 +23,12 @@ extern int shm_id;
 extern shared_data_t *shm_ptr;
 extern int sem_id;
 
-// Signal handling global variable (declared in signal_handler.h)
+// Signal handling global variable
 extern volatile sig_atomic_t simulation_should_end;
 
-// --- Function Prototypes ---
+// Functions
 void main_process_logic(int num_stations, float avg_arrive_time_lambda, float avg_wash_time, int run_time_seconds);
 
-// // --- Signal Handler ---
-// void sigint_handler(int signum) {
-//     char msg[] = "\nSIGINT received by main process. Initiating graceful shutdown...\n";
-//     write(STDOUT_FILENO, msg, sizeof(msg) - 1);
-//
-//     simulation_should_end = 1;
-//     if (shm_ptr != (void *)-1 && shm_id != -1) {
-//         shm_ptr->simulation_active = 0;
-//         shm_ptr->sigint_triggered = 1;
-//     }
-// }
 
 int main(int argc, char *argv[]) {
     if (argc != 5) {
@@ -78,9 +60,9 @@ int main(int argc, char *argv[]) {
     simulation_start_time_global_monotonic_sec = start_ts_monotonic.tv_sec;
     simulation_start_time_global_monotonic_nsec = start_ts_monotonic.tv_nsec;
 
-    // Use 0 for arrival_num when main process logs something generic before cars exist
+    // 0 for arrival_num when main process logs something generic before cars exist
     print_log(0, 0, "Car Wash Simulation Starting...");
-    printf("Parameters: Stations=%d, AvgArrive=%.2fs (Lambda=%.3f), AvgWash=%.2fs, SimTime=%ds\n",
+    printf("Parameters: Stations=%d, AvgArrivalTime=%.2fs (Lambda=%.3f), AvgWashTime=%.2fs, SimulationTime=%ds\n",
            num_stations, avg_arrive_time, avg_arrive_time_lambda, avg_wash_time, run_time_seconds);
     fflush(stdout);
 

@@ -1,10 +1,7 @@
-// structures.h
 #ifndef STRUCTURES_H
 #define STRUCTURES_H
 
 #include <sys/types.h>
-#include <time.h>
-
 #include "constants.h"
 
 typedef struct {
@@ -34,4 +31,4 @@ typedef struct {
 
 } shared_data_t;
 
-#endif // STRUCTURES_H
+#endif

@@ -1,4 +1,3 @@
-// simulation_logic.c
 #include "simulation_logic.h"
 #include "utils.h"
 #include "logging.h"
@@ -18,7 +17,7 @@ extern volatile sig_atomic_t simulation_should_end;
 
 void main_process_logic(int num_stations, float avg_arrive_time_lambda, float avg_wash_time,
                        int run_time_seconds) {
-    print_log(0, 0, "Main process logic starting.");
+    print_log(0, 0, "Car Wash Simulator: Main process logic starting\n");
     printf("Will generate cars for up to %d seconds.\n", run_time_seconds);
     fflush(stdout);
 
@@ -35,12 +34,10 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
     double simulation_end_time = 0.0;
 
     while (get_current_simulation_time_sec(shm_ptr->main_simulation_start_time_sec,
-                                            shm_ptr->main_simulation_start_time_nsec) <
-               run_time_seconds &&
-           !simulation_should_end) {
+                                            shm_ptr->main_simulation_start_time_nsec) < run_time_seconds && !simulation_should_end) {
         float time_to_next_arrival = nextTime(avg_arrive_time_lambda);
         double current_sim_time = get_current_simulation_time_sec(
-            shm_ptr->main_simulation_start_time_sec, shm_ptr->main_simulation_start_time_nsec);
+                shm_ptr->main_simulation_start_time_sec, shm_ptr->main_simulation_start_time_nsec);
 
         if (current_sim_time + time_to_next_arrival >= run_time_seconds) {
             car_generation_ended = 1;
@@ -50,14 +47,14 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
 
         struct timespec sleep_duration = {(time_t)time_to_next_arrival,
                                           (long)((time_to_next_arrival -
-                                                 (time_t)time_to_next_arrival) *
-                                                 1e9)};
+                                                 (time_t)time_to_next_arrival) * 1e9)};
 
         if (nanosleep(&sleep_duration, NULL) == -1 && errno == EINTR) {
             print_log(0, 0, "Main sleep interrupted.");
             if (simulation_should_end)
                 break;
         }
+
         if (simulation_should_end)
             break;
 
@@ -68,7 +65,7 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
             if (shm_ptr && shm_id != -1)
                 shm_ptr->simulation_active = 0;
             break;
-        } else if (pid == 0) {
+        } else if (pid == 0) {                      // Child -> Car process
             srand(time(NULL) ^ getpid());
             car_process_logic(avg_wash_time);
             cleanup_ipc(0);
@@ -159,7 +156,6 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
                          "Main: Run time expired (%.2f) - Queue empty, all stations free, and all forked children processed.",
                          simulation_end_time);
                 print_log(0, 0, reason_buffer);
-
                 goto end_wait_loop;
             }
         }
@@ -206,9 +202,8 @@ end_wait_loop:;
 
 void car_process_logic(float avg_wash_time) {
     pid_t car_id = getpid();
-    unsigned long my_arrival_number = 0; // Will be set when car queues
+    unsigned long my_arrival_number = 0;
     struct timespec car_arrival_ts_monotonic, car_enter_wash_ts_monotonic;
-
     struct sembuf sop_lock = {MUTEX_SEM, -1, SEM_UNDO};
     struct sembuf sop_unlock = {MUTEX_SEM, 1, SEM_UNDO};
     struct sembuf sop_car_queued_signal = {CARS_IN_QUEUE_SEM, 1, SEM_UNDO};
@@ -236,7 +231,7 @@ void car_process_logic(float avg_wash_time) {
         shm_ptr->queue[shm_ptr->queue_tail].car_id = car_id;
         shm_ptr->queue[shm_ptr->queue_tail].arrival_time_sec = car_arrival_ts_monotonic.tv_sec;
         shm_ptr->queue[shm_ptr->queue_tail].arrival_time_nsec = car_arrival_ts_monotonic.tv_nsec;
-        shm_ptr->queue[shm_ptr->queue_tail].arrival_number = my_arrival_number; // Store it
+        shm_ptr->queue[shm_ptr->queue_tail].arrival_number = my_arrival_number;
         shm_ptr->queue_tail = (shm_ptr->queue_tail + 1) % MAX_QUEUE_SIZE;
         shm_ptr->cars_currently_in_queue++;
         print_log(car_id, my_arrival_number, "Arrived");
