@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     shm_ptr->main_simulation_start_time_nsec = start_ts_monotonic.tv_nsec;
     shm_ptr->simulation_active = 1;
     shm_ptr->sigint_triggered = 0;
-    shm_ptr->car_arrival_counter = 1; // Start arrival numbers from 1
+    shm_ptr->car_arrival_counter = 1;                               // Start arrival numbers from 1
     shm_ptr->main_pid = getpid();
 
 

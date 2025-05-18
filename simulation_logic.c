@@ -18,7 +18,6 @@ extern int sem_id;
 extern volatile sig_atomic_t simulation_should_end;
 
 
-
 void read_logs_from_pipe() {
     char read_buf[512];
     ssize_t num_read;
@@ -32,6 +31,7 @@ void read_logs_from_pipe() {
         fflush(stdout);
     }
 }
+
 
 void main_process_logic(int num_stations, float avg_arrive_time_lambda, float avg_wash_time,
                        int run_time_seconds) {
@@ -78,7 +78,7 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
             if (simulation_should_end)
                 break;
         }
-        //
+
         current_sim_time = get_current_simulation_time_sec(
                 shm_ptr->main_simulation_start_time_sec,
                 shm_ptr->main_simulation_start_time_nsec);
@@ -87,9 +87,9 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
             printf("LOOP END RUN TIME EXPIRED!!!!!!!!!!!!!!!!!!!!!!\n");
             print_log(0, 0,
                       "Car generation loop finished. Run time reached during sleep.");
-            break;                      /* ← DO NOT fork a new car */
+            break;                      /* DO NOT fork a new car */
         }
-        //
+
         if (simulation_should_end)
             break;
 
@@ -167,7 +167,6 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
                      "Main wait: Forked=%d, Reaped=%d. Queue=%ld. EmptyStationsSem=%d (Target %d).",
                      children_forked_count, M_terminated_children_count, current_cars_in_queue,
                      current_empty_stations_val, num_stations);
-            //print_log(0, 0, wait_status_buf);
         }
 
         if (shm_ptr->sigint_triggered) {
@@ -225,6 +224,7 @@ end_wait_loop:;
     }
 }
 
+
 void car_process_logic(float avg_wash_time) {
     pid_t car_id = getpid();
     unsigned long my_arrival_number = 0;
@@ -249,8 +249,8 @@ void car_process_logic(float avg_wash_time) {
         _exit(EXIT_FAILURE);
     }
 
-    my_arrival_number = shm_ptr->car_arrival_counter; // Get arrival number
-    shm_ptr->car_arrival_counter++;                 // Increment global counter for next car
+    my_arrival_number = shm_ptr->car_arrival_counter;       // Get arrival number
+    shm_ptr->car_arrival_counter++;                         // Increment global counter for next car
 
     if (shm_ptr->cars_currently_in_queue < MAX_QUEUE_SIZE) {
         shm_ptr->queue[shm_ptr->queue_tail].car_id = car_id;

@@ -28,6 +28,8 @@ typedef struct {
     long main_simulation_start_time_nsec;
     int simulation_active;
     int sigint_triggered;
+
+    // Parent Process PID
     pid_t main_pid;
 
 } shared_data_t;
