@@ -10,10 +10,28 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/sem.h>
+#include <fcntl.h>
+
 
 extern shared_data_t *shm_ptr;
 extern int sem_id;
 extern volatile sig_atomic_t simulation_should_end;
+
+
+
+void read_logs_from_pipe() {
+    char read_buf[512];
+    ssize_t num_read;
+
+    // Set pipe read end to non-blocking (if desired)
+    fcntl(log_pipe_fd[0], F_SETFL, O_NONBLOCK);
+
+    while ((num_read = read(log_pipe_fd[0], read_buf, sizeof(read_buf)-1)) > 0) {
+        read_buf[num_read] = '\0';
+        printf("%s", read_buf);
+        fflush(stdout);
+    }
+}
 
 void main_process_logic(int num_stations, float avg_arrive_time_lambda, float avg_wash_time,
                        int run_time_seconds) {
@@ -40,6 +58,9 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
             break;
         }
 
+        read_logs_from_pipe();
+        usleep(100000);  // Sleep briefly
+
         float time_to_next_arrival = nextTime(avg_arrive_time_lambda);
         double arrival_time = current_sim_time + time_to_next_arrival;
 
@@ -57,7 +78,18 @@ void main_process_logic(int num_stations, float avg_arrive_time_lambda, float av
             if (simulation_should_end)
                 break;
         }
+        //
+        current_sim_time = get_current_simulation_time_sec(
+                shm_ptr->main_simulation_start_time_sec,
+                shm_ptr->main_simulation_start_time_nsec);
 
+        if (current_sim_time >= run_time_seconds) {
+            printf("LOOP END RUN TIME EXPIRED!!!!!!!!!!!!!!!!!!!!!!\n");
+            print_log(0, 0,
+                      "Car generation loop finished. Run time reached during sleep.");
+            break;                      /* ← DO NOT fork a new car */
+        }
+        //
         if (simulation_should_end)
             break;
 
@@ -304,3 +336,5 @@ void car_process_logic(float avg_wash_time) {
 
     _exit(EXIT_SUCCESS);
 }
+
+
