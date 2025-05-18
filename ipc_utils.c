@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
 
@@ -11,6 +12,8 @@ shared_data_t *shm_ptr = (void *)-1;
 int sem_id = -1;
 
 extern void print_log(pid_t car_id, unsigned long arrival_num, const char *message_format);
+extern int log_pipe_fd[];
+
 
 void initialize_ipc(int num_stations) {
     shm_id = shmget(SHM_KEY, sizeof(shared_data_t), IPC_CREAT | 0666);
@@ -96,4 +99,6 @@ void cleanup_ipc(int is_main_process) {
         }
         print_log(0, 0, "IPC Cleanup by main process finished.");
     }
+    close(log_pipe_fd[0]);
+    close(log_pipe_fd[1]);
 }

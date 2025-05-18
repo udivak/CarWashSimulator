@@ -22,12 +22,10 @@ long simulation_start_time_global_monotonic_nsec;
 extern int shm_id;
 extern shared_data_t *shm_ptr;
 extern int sem_id;
+int log_pipe_fd[2];
 
 // Signal handling global variable
 extern volatile sig_atomic_t simulation_should_end;
-
-// Functions
-void main_process_logic(int num_stations, float avg_arrive_time_lambda, float avg_wash_time, int run_time_seconds);
 
 
 int main(int argc, char *argv[]) {
@@ -60,6 +58,11 @@ int main(int argc, char *argv[]) {
     simulation_start_time_global_monotonic_sec = start_ts_monotonic.tv_sec;
     simulation_start_time_global_monotonic_nsec = start_ts_monotonic.tv_nsec;
 
+    if (pipe(log_pipe_fd) < 0) {
+        perror("pipe");
+        exit(EXIT_FAILURE);
+    }
+
     // 0 for arrival_num when main process logs something generic before cars exist
     print_log(0, 0, "Car Wash Simulation Starting...");
     printf("Parameters: Stations=%d, AvgArrivalTime=%.2fs (Lambda=%.3f), AvgWashTime=%.2fs, SimulationTime=%ds\n",
@@ -72,6 +75,8 @@ int main(int argc, char *argv[]) {
     shm_ptr->simulation_active = 1;
     shm_ptr->sigint_triggered = 0;
     shm_ptr->car_arrival_counter = 1; // Start arrival numbers from 1
+    shm_ptr->main_pid = getpid();
+
 
     struct sigaction sa;
     sa.sa_handler = sigint_handler;
