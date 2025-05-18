@@ -723,7 +723,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "hw4_gemini"
+			"value" : "CarWashSimulator"
 		},
 		{
 			"name" : "CMAKE_RANLIB",
@@ -1020,6 +1020,42 @@
 			],
 			"type" : "BOOL",
 			"value" : "FALSE"
+		},
+		{
+			"name" : "CarWashSimulator_BINARY_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "/Users/udivak/Desktop/OS/hw4-gemini/cmake-build-debug"
+		},
+		{
+			"name" : "CarWashSimulator_IS_TOP_LEVEL",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "ON"
+		},
+		{
+			"name" : "CarWashSimulator_SOURCE_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "/Users/udivak/Desktop/OS/hw4-gemini"
 		},
 		{
 			"name" : "hw4_gemini_BINARY_DIR",
