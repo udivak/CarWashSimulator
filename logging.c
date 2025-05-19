@@ -56,7 +56,7 @@ void print_log(pid_t car_pid, unsigned long arrival_num, const char *message_for
             simulation_start_time_global_monotonic_sec,
             simulation_start_time_global_monotonic_nsec);
     }
-
+    /*
     char buf[256];
     if (car_pid == 0) {
         snprintf(buf, sizeof(buf), "%s, Time: %.6f\n", message_format, sim_time);
@@ -64,7 +64,26 @@ void print_log(pid_t car_pid, unsigned long arrival_num, const char *message_for
         snprintf(buf, sizeof(buf),
                  "Car: %d (Arrival Number: %lu), %s, Time: %.6f\n",
                  car_pid, arrival_num, message_format, sim_time);
-    }
+    }*/
+    int qsize = 0;
+        if (shm_ptr != (void*)-1)  // once IPC is up, we can read the real queue size
+                qsize = shm_ptr->cars_currently_in_queue;
+
+        char buf[256];
+       if (car_pid == 0) {
+                // main‐process log; include queue size
+                snprintf(buf, sizeof(buf),
+                         "%s | Cars in Queue: %d | Time: %.6f\n",
+                        message_format, qsize, sim_time);
+            } else {
+                    // car‐process log; include queue size
+                   snprintf(buf, sizeof(buf),
+                            "Car: %d (Arrival Number: %lu), %s | Cars in Queue: %d | Time: %.6f\n",
+                             car_pid, arrival_num, message_format, qsize, sim_time);
+                }
+
+
+
 
     // make sure we set shm_ptr->main_pid = getpid() *after* initialize_ipc in main()
     if (shm_ptr == (void*)-1 || getpid() == shm_ptr->main_pid) {
